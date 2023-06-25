@@ -1,0 +1,7 @@
+[Desktop Entry]
+Name=Test Dupe In Usr
+Comment=It's a duplicate of the version in home
+Exec=sh -c "echo 'Test Dupe In Usr'"
+Type=Application
+Categories=Network;InstantMessaging;
+

@@ -1,0 +1,7 @@
+[Desktop Entry]
+Name=Test1
+Comment=It's a test app
+Exec=sh -c "echo 'Test1'"
+Type=Application
+Categories=Network;InstantMessaging;
+
