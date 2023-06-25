@@ -50,6 +50,30 @@ local show_menubar_and_hide = function(count)
     end
 end
 
+local refresh_on_show_when_cache_off = function()
+    menubar_refreshed = false
+    menubar.cache_entries = false
+    menubar.show()
+    menubar.hide()
+    awesome.sync()
+    return menubar_refreshed;
+end
+
+local no_refresh_on_second_show_when_cache_on = function()
+    menubar.cache_entries = true
+    -- Ensure that we have loaded the cache
+    menubar.show()
+    menubar.hide()
+    awesome.sync()
+
+    -- Now show again
+    menubar_refreshed = false
+    menubar.show()
+    menubar.hide()
+    awesome.sync()
+    return not menubar_refreshed;
+end
+
 runner.run_steps {
     function(count)
         -- Show and hide with defaults
@@ -60,6 +84,16 @@ runner.run_steps {
         -- Show and hide with match_empty set to false
         menubar.match_empty = false
         return show_menubar_and_hide(count)
+    end,
+
+    function(_)
+        -- Show and hide with cache disabled
+        return refresh_on_show_when_cache_off()
+    end,
+
+    function(_)
+        -- Show twice and confirm that cache is not set afterward
+        return no_refresh_on_second_show_when_cache_on()
     end,
 
     function()
