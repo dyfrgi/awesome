@@ -1,7 +1,11 @@
 -- Test the menubar
 
+local assert = require("luassert")
+local say = require("say")
 local runner = require("_runner")
 local menubar = require("menubar")
+local menu_gen = require("menubar.menu_gen")
+local os = require("os")
 
 local menubar_refreshed = false
 local orig_refresh = menubar.refresh
@@ -74,7 +78,43 @@ local no_refresh_on_second_show_when_cache_on = function()
     return not menubar_refreshed;
 end
 
+local has_menu_entry = function(state, arguments)
+    local name = arguments[1]
+    local entries = arguments[2]
+    for _, entry in pairs(entries) do
+        if entry.name == name then
+            return true
+        end
+    end
+    return false
+end
+say:set_namespace("en")
+say:set("assertion.has_menu_entry.positive", "Expected menu entry %s in:\n%s")
+say:set("assertion.has_menu_entry.negative", "Expected menu entry %s not to be in:\n%s")
+assert:register("assertion", "has_menu_entry", has_menu_entry, "assertion.has_menu_entry.positive",
+    "assertion.has_menu_entry.negative")
+
 runner.run_steps {
+    function(_)
+        menu_gen.all_menu_dirs = {
+            (os.getenv("SOURCE_DIRECTORY") or '.') .. "/spec/menubar/home/.local/share",
+            (os.getenv("SOURCE_DIRECTORY") or '.') .. "/spec/menubar/usr/share"
+        }
+        -- This refresh is async so we hope to get it on the next test step
+        menubar.refresh()
+        return true
+    end,
+
+    function(_)
+        if (#menubar.menu_entries == 0) then
+            -- haven't finished refreshing yet, wait
+            return
+        end
+        assert.has_menu_entry("Test Dupe In Home", menubar.menu_entries)
+        assert.not_has_menu_entry("Test Dupe In Usr", menubar.menu_entries)
+        return true
+    end,
+
     function(count)
         -- Show and hide with defaults
         return show_menubar_and_hide(count)
@@ -95,10 +135,6 @@ runner.run_steps {
         -- Show twice and confirm that cache is not set afterward
         return no_refresh_on_second_show_when_cache_on()
     end,
-
-    function()
-        return true
-    end
 }
 
 -- vim: filetype=lua:expandtab:shiftwidth=4:tabstop=8:softtabstop=4:textwidth=80
